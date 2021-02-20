@@ -16,13 +16,10 @@ def createParser():
     parser.add_argument("-v", "--verbosity_level", default=0, help="verbosity level: 0 is off")
     return parser
 
-
-
-
 def main():
     p = Portfolio("record")
     p.parseRecords()
-    p.calculateReturn()
+    p.calculateStockReturn()
     p.displaySummary()
 
 if __name__ == "__main__":
