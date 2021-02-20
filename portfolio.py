@@ -6,14 +6,22 @@ class Portfolio:
     def __init__(self, filename):
         self.filename = filename
         self.stocks = {}
-        self.returns = []
-        self.total_capital_invested = 0.0
-        self.total_asset = 0.0
-        self.total_gain = 0.0
-        self.total_return = 0.0
+        self.open_capital = 0.0
+        self.open_gain = 0.0
+        self.open_return = 0.0
+        self.open_out = []
+        self.close_capital = 0.0
+        self.close_gain = 0.0
+        self.close_return = 0.0
+        self.close_out = []
+        #self.returns = []
+        #self.total_capital_invested = 0.0
+        #self.total_asset = 0.0
+        #self.total_gain = 0.0
+        #self.total_return = 0.0
 
     def __repr__(self):
-        return "%r" %self.stocks
+        return "%r" %self.stocks.keys()
 
     def parseRecords(self):
         with open(self.filename, "r") as in_fp:
@@ -22,22 +30,36 @@ class Portfolio:
                 self._parseTransaction(line_t)
         in_fp.close()
 
-    def calculateReturn(self):
+    def calculateStockReturn(self):
         for _, stock in self.stocks.items():
-            self.returns.append(stock.getReturn())
+            stock.calculateReturn()
+            if stock.returnOpen() is not None:
+                self.open_out.append(stock.returnOpen())
+            if stock.returnClose() is not None:
+                self.close_out.append(stock.returnClose())
 
     def displaySummary(self):
         print("Your Portforlio Summary is below:")
         print("=======================================================")
-        self._formatResults()
+        self._formatStockResult(outstanding=False)
         print("=======================================================")
-        self._formatConclusion()
+        self._formatStockResult(outstanding=True)
+        print("=======================================================")
+        #self._formatConclusion()
         print("=======================================================")
 
-    def _formatResults(self):
-        print('{:^7}'.format("Ticker") + '{:^12}'.format("Gain/Loss") + '{:>8}'.format("Yield") + "%")
-        for ret in self.returns:
-            print('{:^7}'.format(ret[0]) + '{:>10.2f}'.format(ret[1]) + '{:>10.2f}'.format(ret[2] * 100) + "%")
+    def _formatStockResult(self, outstanding):
+        if not outstanding:
+            print('{:^45}'.format("[Profit Ended]"))
+            output = self.close_out
+        else:
+            print('{:^45}'.format("[Outstanding]"))
+            output = self.open_out
+        print('{:^7}'.format("Ticker") + '{:>8}'.format("Shares") + '{:>14}'.format("Gain/Loss") +
+              '{:>10}'.format("Yield") + "%")
+        for ret in output:
+            print('{:^7}'.format(ret[0]) + '{:>8}'.format(ret[1]) + '{:>14.2f}'.format(ret[2]) +
+                  '{:>10.2f}'.format(ret[3] * 100) + "%")
 
     def _formatConclusion(self):
         self._calculateResult()
