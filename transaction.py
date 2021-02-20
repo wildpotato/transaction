@@ -1,13 +1,14 @@
 
 class Transaction:
-    def __init__(self, date, action, price, volume):
+    def __init__(self, date, action, price, volume, volume_traded):
         self.date = date
         self.action = action
         self.price = price
         self.volume = volume
+        self.volume_traded = volume_traded
 
     def __repr__(self):
-        return "%r %r %r %r" %(self._date, self._action, self._price, self._volume)
+        return "%r %r %r %r %r" %(self._date, self._action, self._price, self._volume, self._volume_traded)
 
     @property
     def amount(self):
@@ -65,3 +66,17 @@ class Transaction:
         if not volume.isnumeric():
             raise ValueError('Expected an integer, get "%s"' %volume)
         self._volume = int(volume)
+
+    @property
+    def volume_traded(self):
+        return self._volume_traded
+
+    @volume_traded.setter
+    def volume_traded(self, volume_traded):
+        if not isinstance(volume_traded, int):
+            raise TypeError('Expected an integer')
+        if volume_traded < 0:
+            raise ValueError('Cannot trade negative shares')
+        elif volume_traded > self._volume:
+            raise ValueError('Cannot trade more shares than transaction volume')
+        self._volume_traded = volume_traded
