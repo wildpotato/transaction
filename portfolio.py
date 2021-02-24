@@ -7,13 +7,17 @@ class Portfolio:
         self.filename = filename
         self.stocks = {}
         self.open_capital = 0.0
-        self.open_gain = 0.0
+        self.open_market_value = 0.0
         self.open_return = 0.0
         self.open_out = []
         self.close_capital = 0.0
         self.close_gain = 0.0
         self.close_return = 0.0
         self.close_out = []
+        self.total_dividends = 0.0
+        self.total_capital = 0.0
+        self.total_gain = 0.0
+        self.total_return = 0.0
         #self.returns = []
         #self.total_capital_invested = 0.0
         #self.total_asset = 0.0
@@ -37,15 +41,19 @@ class Portfolio:
                 self.open_out.append(stock.returnOpen())
             if stock.returnClose() is not None:
                 self.close_out.append(stock.returnClose())
+            self._updateOpenStats(stock)
+            self._updateCloseStats(stock)
+            self._updateTotalDividends(stock)
+        self._calculateOpenAndCloseReturn()
 
     def displaySummary(self):
         print("Your Portforlio Summary is below:")
         print("=======================================================")
         self._formatStockResult(outstanding=False)
+        self._formatOpenAndCloseReturn(outstanding=False)
         print("=======================================================")
         self._formatStockResult(outstanding=True)
-        print("=======================================================")
-        #self._formatConclusion()
+        self._formatOpenAndCloseReturn(outstanding=True)
         print("=======================================================")
 
     def _formatStockResult(self, outstanding):
@@ -61,24 +69,36 @@ class Portfolio:
             print('{:^7}'.format(ret[0]) + '{:>8}'.format(ret[1]) + '{:>14.2f}'.format(ret[2]) +
                   '{:>10.2f}'.format(ret[3] * 100) + "%")
 
-    def _formatConclusion(self):
-        self._calculateResult()
-        print('{:^25}'.format("Total yield (%)") + '{:>9.2}'.format(self.total_return * 100) + "%")
-        print('{:^25}'.format("Total gain/loss ($)") + '{:>10.2f}'.format(self.total_gain))
-        print('{:^25}'.format("Total capital invested ($)") + '{:>10.2f}'.format(self.total_capital_invested))
-
-    def _calculateResult(self):
-        for stock in self.stocks.values():
-            self.total_capital_invested += stock.capital_invested
-            self.total_asset += stock.current_asset
-        self.total_gain = self.total_asset - self.total_capital_invested
-        self.total_return = self.total_gain / self.total_capital_invested
+    def _formatOpenAndCloseReturn(self, outstanding):
+        capital = self.open_capital if outstanding else self.close_capital
+        gain = self.open_market_value - self.open_capital if outstanding else self.close_gain
+        return_rate = self.open_return if outstanding else self.close_return
+        print('{:^25}'.format("Capital invested ($)") + '{:>10.2f}'.format(capital))
+        print('{:^25}'.format("Gain/loss ($)") + '{:>10.2f}'.format(gain))
+        print('{:^25}'.format("Return rate (%)") + '{:>9.2f}'.format(return_rate * 100) + "%")
 
     def _parseTransaction(self, line_of_transaction):
         [date, action, ticker, price, volume] = line_of_transaction.split(' ')
         if ticker not in self.stocks:
             self.stocks[ticker] = Stock(ticker)
         self.stocks[ticker].addTransaction(date, action, price, volume)
+
+    def _updateOpenStats(self, stock):
+        self.open_capital += stock.open_capital_invested
+        self.open_market_value += stock.open_market_value
+
+    def _updateCloseStats(self, stock):
+        self.close_capital += stock.close_capital_invested
+        self.close_gain += stock.close_accumulated_gain
+
+    def _updateTotalDividends(self, stock):
+        self.total_dividends += stock.dividends_earned
+
+    def _calculateOpenAndCloseReturn(self):
+        if self.open_capital > 0:
+            self.open_return = (self.open_market_value - self.open_capital) / self.open_capital
+        if self.close_capital > 0:
+            self.close_return = self.close_gain / self.close_capital
 
     @property
     def filename(self):
